@@ -1,8 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Solana Brand Colors */
+  --solana-purple: #9945ff;
+  --solana-purple-dark: #7c2ae8;
+  --solana-purple-light: #b565ff;
+  --solana-green: #14f195;
+  --solana-green-dark: #00d4aa;
+  --solana-cyan: #00d4ff;
+  --solana-pink: #dc1fff;
+
+  /* Background & Surface Colors */
+  --background: #0a0a0a;
+  --background-secondary: #111111;
+  --surface: rgba(153, 69, 255, 0.1);
+  --surface-strong: rgba(153, 69, 255, 0.2);
+  --foreground: #ffffff;
+
+  /* Gradient Definitions */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--solana-purple) 0%,
+    var(--solana-pink) 100%
+  );
+  --gradient-secondary: linear-gradient(
+    135deg,
+    var(--solana-green) 0%,
+    var(--solana-cyan) 100%
+  );
+  --gradient-accent: linear-gradient(
+    135deg,
+    var(--solana-purple) 0%,
+    var(--solana-green) 100%
+  );
+  --gradient-background: linear-gradient(
+    135deg,
+    #0a0a0a 0%,
+    #1a0a2e 50%,
+    #0a0a0a 100%
+  );
 }
 
 @theme inline {
@@ -10,17 +46,249 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Solana Custom Colors */
+  --color-solana-purple: var(--solana-purple);
+  --color-solana-green: var(--solana-green);
+  --color-solana-cyan: var(--solana-cyan);
+  --color-solana-pink: var(--solana-pink);
 }
 
 body {
-  background: var(--background);
+  background: var(--gradient-background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Solana-themed utility classes */
+.solana-gradient {
+  background: var(--gradient-primary);
+}
+
+.solana-gradient-secondary {
+  background: var(--gradient-secondary);
+}
+
+.solana-gradient-accent {
+  background: var(--gradient-accent);
+}
+
+.text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-brand {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-secondary {
+  background: var(--gradient-secondary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism effects with Solana colors */
+.glass-surface {
+  background: rgba(153, 69, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(153, 69, 255, 0.2);
+}
+
+.glass-surface-strong {
+  background: rgba(153, 69, 255, 0.15);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(153, 69, 255, 0.3);
+}
+
+.glass-surface-light:hover {
+  background: rgba(153, 69, 255, 0.15);
+  border-color: rgba(153, 69, 255, 0.4);
+}
+
+.glass-header {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(153, 69, 255, 0.2);
+}
+
+.glass-card {
+  background: rgba(153, 69, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(153, 69, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(153, 69, 255, 0.1);
+  border-color: rgba(153, 69, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Solana-themed glow effects */
+.glow-solana {
+  box-shadow: 0 0 20px rgba(153, 69, 255, 0.3), 0 0 40px rgba(153, 69, 255, 0.1);
+}
+
+.glow-solana-green {
+  box-shadow: 0 0 20px rgba(20, 241, 149, 0.3), 0 0 40px rgba(20, 241, 149, 0.1);
+}
+
+.glow-white {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2),
+    0 0 40px rgba(255, 255, 255, 0.1);
+}
+
+.glow-white-soft {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+/* Animated background grid */
+.grid-bg {
+  background-image: linear-gradient(
+      rgba(153, 69, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(153, 69, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+@keyframes grid-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+/* Solana-themed buttons */
+.btn-solana {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3);
+}
+
+.btn-solana:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(153, 69, 255, 0.4);
+}
+
+.btn-solana-outline {
+  background: transparent;
+  color: var(--solana-purple);
+  border: 2px solid var(--solana-purple);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-solana-outline:hover {
+  background: var(--gradient-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Enhanced shadows and effects */
+.shadow-elegant-lg {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(153, 69, 255, 0.2);
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* Typography improvements */
+.brand-font {
+  font-family: "Inter", sans-serif;
+  font-weight: 800;
+}
+
+.text-font {
+  font-family: "Inter", sans-serif;
+}
+
+/* Solana network visualization */
+.network-dots {
+  position: relative;
+}
+
+.network-dots::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      circle at 25% 25%,
+      var(--solana-purple) 2px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 75% 75%, var(--solana-green) 2px, transparent 2px);
+  background-size: 100px 100px;
+  opacity: 0.3;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .glass-card {
+    backdrop-filter: blur(10px);
+  }
+
+  .grid-bg {
+    background-size: 30px 30px;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .grid-bg {
+    animation: none;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  .network-dots::before {
+    animation: none;
+  }
 }
