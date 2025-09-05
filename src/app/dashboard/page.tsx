@@ -21,6 +21,7 @@ import {
   Plus,
   ExternalLink,
   RefreshCw,
+  CheckCircle,
 } from "lucide-react";
 import {
   Connection,
@@ -70,6 +71,34 @@ export default function Dashboard() {
   const [swapLoading, setSwapLoading] = useState(false);
   const [swapSuccess, setSwapSuccess] = useState(false);
   const [swapError, setSwapError] = useState<string | null>(null);
+
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+
+  // Load recent activities from localStorage on client only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("recentActivities");
+        setRecentActivities(stored ? JSON.parse(stored) : []);
+      } catch (e) {
+        console.warn("Failed to parse recentActivities from localStorage", e);
+        setRecentActivities([]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          "recentActivities",
+          JSON.stringify(recentActivities)
+        );
+      } catch (e) {
+        console.warn("Failed to write recentActivities to localStorage", e);
+      }
+    }
+  }, [recentActivities]);
 
   // Fetch SOL balance
   const fetchSolBalance = async () => {
@@ -203,6 +232,18 @@ export default function Dashboard() {
         fetchSolBalance();
         fetchSolbBalance();
       }, 3000);
+
+      // Add activity to recent activities
+      setRecentActivities((prev: any) => [
+        ...prev,
+        {
+          title: "Swap SOL to SOLB",
+          description: `Swapped ${swapAmount} SOL to ${mintResult.solbAmount} SOLB`,
+          amount: `${swapAmount} SOL`,
+          timestamp: Date.now(),
+          type: "swap",
+        },
+      ]);
     } catch (error) {
       console.error("Swap error:", error);
       setSwapError(error instanceof Error ? error.message : "Swap failed");
@@ -242,6 +283,24 @@ export default function Dashboard() {
       change: "+0%",
     },
   ];
+
+  const formatTimeAgo = (timestamp: number) => {
+    const timeAgo = Date.now() - timestamp;
+    const seconds = Math.floor(timeAgo / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days}d ago`;
+    } else if (hours > 0) {
+      return `${hours}h ago`;
+    } else if (minutes > 0) {
+      return `${minutes}m ago`;
+    } else {
+      return `${seconds}s ago`;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white grid-bg network-dots">
@@ -437,17 +496,99 @@ export default function Dashboard() {
             Recent Activity
           </h2>
 
-          <div className="text-center py-12">
-            <div className="w-16 h-16 glass-surface rounded-full flex items-center justify-center mx-auto mb-4">
-              <Zap className="w-8 h-8 text-white/50" />
+          {recentActivities.length > 0 ? (
+            <div className="space-y-4">
+              {recentActivities.slice(0, 5).map((activity: any, index: any) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-4 p-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex-shrink-0">
+                    {activity.type === "swap" && (
+                      <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
+                        <ArrowUpDown className="w-5 h-5 text-purple-400" />
+                      </div>
+                    )}
+                    {activity.type === "brand_step" && (
+                      <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      </div>
+                    )}
+                    {activity.type === "brand_complete" && (
+                      <div className="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-cyan-400" />
+                      </div>
+                    )}
+                    {activity.type === "mint" && (
+                      <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                        <Coins className="w-5 h-5 text-yellow-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-white font-medium truncate">
+                        {activity.title}
+                      </h4>
+                      <span className="text-xs text-white/50 whitespace-nowrap ml-2">
+                        {formatTimeAgo(activity.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white/70 mb-2">
+                      {activity.description}
+                    </p>
+                    {activity.amount && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-white/60">Amount:</span>
+                        <span className="text-white font-medium">
+                          {activity.amount}
+                        </span>
+                      </div>
+                    )}
+                    {activity.status && (
+                      <div className="flex items-center gap-2 text-xs mt-1">
+                        <span className="text-white/60">Status:</span>
+                        <span
+                          className={`font-medium ${
+                            activity.status === "completed"
+                              ? "text-green-400"
+                              : activity.status === "pending"
+                              ? "text-yellow-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {activity.status}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {recentActivities.length > 5 && (
+                <button
+                  onClick={() => {
+                    // Could implement view all activities
+                  }}
+                  className="w-full text-center py-3 text-purple-400 hover:text-purple-300 text-sm font-medium border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  View All Activities ({recentActivities.length})
+                </button>
+              )}
             </div>
-            <h3 className="text-xl font-bold text-white/70 mb-2">
-              No Activity Yet
-            </h3>
-            <p className="text-white/50">
-              Your brand creation and token transactions will appear here
-            </p>
-          </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 glass-surface rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-white/50" />
+              </div>
+              <h3 className="text-xl font-bold text-white/70 mb-2">
+                No Activity Yet
+              </h3>
+              <p className="text-white/50">
+                Your brand creation and token transactions will appear here
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
