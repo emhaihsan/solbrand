@@ -7,6 +7,7 @@ import {
   useWeb3AuthUser,
 } from "@web3auth/modal/react";
 import { useSolanaWallet } from "@web3auth/modal/react/solana";
+import { useRouter } from "next/navigation";
 import { Wallet, LogOut, Copy, ExternalLink } from "lucide-react";
 
 export default function WalletConnection() {
@@ -15,15 +16,27 @@ export default function WalletConnection() {
   const { userInfo } = useWeb3AuthUser();
   const { accounts } = useSolanaWallet();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const router = useRouter();
 
   const pubkey = accounts?.[0];
 
-  const handleConnect = () => {
-    connect();
+  const handleConnect = async () => {
+    try {
+      await connect();
+      // Navigate to dashboard after successful connection
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Connection failed:", error);
+    }
   };
 
-  const handleDisconnect = () => {
-    disconnect();
+  const handleDisconnect = async () => {
+    try {
+      await disconnect();
+    } finally {
+      // Navigate to home after disconnect
+      router.push("/");
+    }
   };
 
   const copyAddress = () => {

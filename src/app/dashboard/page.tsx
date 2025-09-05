@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useWeb3AuthUser, useWeb3AuthConnect } from "@web3auth/modal/react";
+import { useWeb3AuthUser } from "@web3auth/modal/react";
 import {
   useSolanaWallet,
   useSignAndSendTransaction,
 } from "@web3auth/modal/react/solana";
+import { useRouter } from "next/navigation";
 import WalletConnection from "@/components/WalletConnection";
 import {
   Wallet,
@@ -51,8 +52,9 @@ const MINT_AUTHORITY = new PublicKey(
 );
 
 export default function Dashboard() {
+  const router = useRouter();
   const { userInfo } = useWeb3AuthUser();
-  const { isConnected } = useWeb3AuthConnect();
+
   const { accounts, connection } = useSolanaWallet();
   const {
     signAndSendTransaction,
@@ -117,11 +119,11 @@ export default function Dashboard() {
 
   // Auto-fetch balances when wallet connects
   useEffect(() => {
-    if (isConnected && accounts && connection) {
+    if (accounts && connection) {
       fetchSolBalance();
       fetchSolbBalance();
     }
-  }, [isConnected, accounts, connection]);
+  }, [accounts, connection]);
 
   // Handle swap functionality
   const handleSwap = async () => {
@@ -141,18 +143,17 @@ export default function Dashboard() {
         throw new Error("Insufficient SOL balance");
       }
 
-      // Get latest blockhash
+      // Step 1: Transfer SOL to treasury
+      console.log("Step 1: Transferring SOL to treasury...");
       const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash();
+        await connection.getLatestBlockhash("confirmed");
 
-      // Create transaction
       const transaction = new Transaction({
         blockhash,
         lastValidBlockHeight,
         feePayer: userPublicKey,
       });
 
-      // 1. Transfer SOL to treasury
       const transferInstruction = SystemProgram.transfer({
         fromPubkey: userPublicKey,
         toPubkey: TREASURY_WALLET,
@@ -160,48 +161,40 @@ export default function Dashboard() {
       });
       transaction.add(transferInstruction);
 
-      // 2. Get user's associated token account for SOLB
-      const userTokenAccount = await getAssociatedTokenAddress(
-        SOLBRAND_MINT,
-        userPublicKey
-      );
+      // Sign and send SOL transfer transaction
+      const signature = await signAndSendTransaction(transaction);
+      console.log("✅ SOL transfer signature:", signature);
 
-      // 3. Check if token account exists, create if not
-      try {
-        await getAccount(connection, userTokenAccount);
-      } catch (error) {
-        // Token account doesn't exist, create it
-        const createTokenAccountInstruction =
-          createAssociatedTokenAccountInstruction(
-            userPublicKey, // payer
-            userTokenAccount, // associated token account
-            userPublicKey, // owner
-            SOLBRAND_MINT // mint
-          );
-        transaction.add(createTokenAccountInstruction);
+      if (!signature) {
+        throw new Error("SOL transfer failed - no signature returned");
       }
 
-      // 4. Calculate SOLB amount to mint (1 SOL = 1000 SOLB)
-      const solbAmount = parseFloat(swapAmount) * 1000;
-      const solbAmountLamports = solbAmount * Math.pow(10, 9); // 9 decimals
+      // Step 2: Call backend API to mint SOLB tokens
+      console.log("Step 2: Calling mint API to create SOLB tokens...");
+      const mintResponse = await fetch("/api/mint-solb", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userWallet: accounts[0],
+          solAmount: swapAmount,
+        }),
+      });
 
-      // 5. Add mint instruction (Note: This requires the treasury to have mint authority)
-      const mintInstruction = createMintToInstruction(
-        SOLBRAND_MINT, // mint
-        userTokenAccount, // destination
-        MINT_AUTHORITY, // mint authority
-        solbAmountLamports // amount
-      );
-      transaction.add(mintInstruction);
+      const mintResult = await mintResponse.json();
 
-      // Sign and send transaction using Web3Auth hook
-      const signature = await signAndSendTransaction(transaction);
+      if (!mintResponse.ok) {
+        throw new Error(
+          `Minting failed: ${mintResult.error || "Unknown error"}`
+        );
+      }
 
-      console.log("Swap transaction signature:", signature);
+      console.log("✅ SOLB minting success:", mintResult);
 
-      // Update UI optimistically
+      // Update UI with successful swap
       setSolBalance((prev) => (prev ? prev - parseFloat(swapAmount) : null));
-      setSolbBalance((prev) => (prev || 0) + solbAmount);
+      setSolbBalance((prev) => (prev || 0) + mintResult.solbAmount);
       setSwapSuccess(true);
       setSwapAmount("");
 
@@ -209,7 +202,7 @@ export default function Dashboard() {
       setTimeout(() => {
         fetchSolBalance();
         fetchSolbBalance();
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error("Swap error:", error);
       setSwapError(error instanceof Error ? error.message : "Swap failed");
@@ -217,25 +210,6 @@ export default function Dashboard() {
       setSwapLoading(false);
     }
   };
-
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-black text-white grid-bg network-dots">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center p-8 glass-card rounded-2xl max-w-md">
-            <Wallet className="w-16 h-16 text-purple-400 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Connect Your Wallet
-            </h2>
-            <p className="text-white/70 mb-6">
-              Please connect your Solana wallet to access the dashboard
-            </p>
-            <WalletConnection />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const stats = [
     {
@@ -416,7 +390,10 @@ export default function Dashboard() {
                 {swapLoading ? "Swapping..." : "Swap"}
               </button>
               {swapSuccess && (
-                <p className="text-green-400 text-sm mt-2">{swapSuccess}</p>
+                <p className="text-green-400 text-sm mt-2">
+                  ✅ Swap complete! SOL transferred and {solbBalance} SOLB
+                  tokens minted to your wallet.
+                </p>
               )}
               {swapError && (
                 <p className="text-red-400 text-sm mt-2">{swapError}</p>

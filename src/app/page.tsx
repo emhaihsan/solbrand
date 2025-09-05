@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useWeb3AuthUser } from "@web3auth/modal/react";
+import { useWeb3AuthUser, useWeb3AuthConnect } from "@web3auth/modal/react";
+import { useRouter } from "next/navigation";
 import WalletConnection from "@/components/WalletConnection";
+import LoadingPage from "@/components/LoadingPage";
 import {
   Sparkles,
   ArrowRight,
@@ -23,11 +25,25 @@ import {
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const { userInfo } = useWeb3AuthUser();
+  const { isConnected, loading } = useWeb3AuthConnect();
+  const router = useRouter();
 
   useEffect(() => {
     setIsVisible(true);
+    // Simulate initialization time to avoid flash of content
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
+
+  // Show loading while Web3Auth is initializing
+  if (loading || isInitializing) {
+    return <LoadingPage />;
+  }
 
   const features = [
     {
