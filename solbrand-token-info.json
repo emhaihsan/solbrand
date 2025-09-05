@@ -1,0 +1,11 @@
+{
+  "mintAddress": "ENboCZvfVz8Rmp2LCixNpvcUZD2eLDci2x4Yjpj2v5HM",
+  "tokenAccount": "3NeyvEKuBA64S6fTc7QJpnrWx4cfruLkVn1KAmGT6vEp",
+  "authority": "CEWxm2fReUAnycavAaM7FuUoFgLJyCFbuyxY8iT8CRAz",
+  "decimals": 9,
+  "initialSupply": 1000000,
+  "network": "devnet",
+  "metadataAccount": "GiC67po6t9U7F2EW6Hd6r8BBMv5KXH8a3DY9YHQQ7Ton",
+  "name": "SolBrand Token",
+  "symbol": "SOLB"
+}
